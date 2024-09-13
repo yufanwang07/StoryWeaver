@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/amongus.css">
+    <link rel="stylesheet" href="https://use.typekit.net/sej1wnw.css">
+    <title>Generate Stories</title>
+    
+</head>
+<body>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+  integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CSSRulePlugin.min.js"
+  integrity="sha512-IxxYrSNXnt/RJlxNX40+7BQL88FLqvdpVpuV9AuvpNH/NFP0L8xA8WLxWTXx6PYExB5R/ktQisp6tIrnLn8xvw=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script src="https://unpkg.com/gsap@3/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.co/gsap@3/dist/gsap.min.js"></script>
+
+  <div class="relativeWrapper" id="delete">
+    <div id="delete2">
+    <div class="e">GENERATE ME A</div>
+      <input  autocomplete="off" class="i" role="combobox" list="" id="theme" name="browsers" placeholder="children's book">
+  <!-- Its important that you keep list attribute empty to hide the default dropdown icon and the browser's default datalist -->
+  <datalist id="browsers" role="listbox">
+    <option value="children's picturebook">children's picturebook</option>
+    <option value="basic storybook">basic storybook</option>
+    <option value="nonfictional lesson">nonfictional lesson</option>
+    <option value="short study guide">study guide</option>
+    <option value="hackathon pitch">hackathon pitch (NON-OFFICIAL)</option>
+    <option value="funny one-line excuse">funny excuse (NON-OFFICIAL)</option>
+  </datalist>
+
+    <br>
+      <div id="step2">
+    <div class="e">ON THE TOPIC OF</div>
+      <textarea id="text" class="i" placeholder="a boy and a dragon"></textarea>
+      <br>
+      <button id="submitBtnText">Submit</button>
+      <br>
+      <br>
+      </div>
+
+      <script>
+        document.getElementById("step2").style.marginLeft = "-5000px";
+        theme.onfocus = function () {
+  browsers.style.display = 'block';
+  theme.style.borderRadius = "5px 5px 0 0";  
+};
+for (let option of browsers.options) {
+  option.onclick = function () {
+    document.getElementById("step2").style.marginLeft = "0px";
+    theme.value = option.value;
+    browsers.style.display = 'none';
+    theme.style.borderRadius = "5px";
+  }
+};
+
+theme.oninput = function() {
+  currentFocus = -1;
+  var text = theme.value.toUpperCase();
+  for (let option of browsers.options) {
+    if(option.value.toUpperCase().indexOf(text) > -1){
+      option.style.display = "block";
+  }else{
+    option.style.display = "none";
+    }
+  };
+}
+var currentFocus = -1;
+theme.onkeydown = function(e) {
+  if(e.keyCode == 40){
+    currentFocus++
+   addActive(browsers.options);
+  }
+  else if(e.keyCode == 38){
+    currentFocus--
+   addActive(browsers.options);
+  }
+  else if(e.keyCode == 13){
+    e.preventDefault();
+        if (currentFocus > -1) {
+          /*and simulate a click on the "active" item:*/
+          if (browsers.options) browsers.options[currentFocus].click();
+        }
+  }
+}
+
+function addActive(x) {
+    if (!x) return false;
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    x[currentFocus].classList.add("active");
+  }
+  function removeActive(x) {
+    for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("active");
+    }
+  }
+        </script>
+
+
+      </div>
+
+      <text id="textGemini" class="h" style="color:white;"></text>
+      <span class="loader"></span>
+
+  <div id="imageContainer"></div>
+
+  </div>
+
+<script type="importmap">
+    {
+      "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai"
+      }
+    }
+</script>
+
+<script type="module">
+    const book = document.getElementsByClassName('book')[0];
+    book.style.display = "none";
+
+    var textarrs = [];
+    var imagearrs = [];
+
+import {
+    GoogleGenerativeAI,
+    HarmCategory,
+    HarmBlockThreshold,
+  } from "@google/generative-ai"
+
+  var finishedArrs = [];
+    async function generateImage(prompt, index, title) {
+        document.getElementById("textGemini").innerText = "Encoding for image " + index + "...";
+        const theme = document.getElementById('theme').value;
+        var encodedPrompt;
+        var shortened = await runChatSingle("Give an description to generate an image from (with no other context) for the following text in a short phrase: " + prompt + ". Don't overcomplicate the description, just describe it in a very basic way without too much styling descriptions.")
+        shortened = shortened.text()
+        console.log("SHORTENED PARAGRAPH "+index+" TO: "+shortened);
+        if(theme == "children's book" || theme == "short story" || theme.includes("children") || theme.includes("story")) {
+          encodedPrompt = encodeURIComponent(`A watercolor illustration on a white background depicting ${shortened}`);
+        }
+        else{
+          encodedPrompt = encodeURIComponent(shortened);
+        }
+        // Construct the full URL for image generation
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}`;
+        console.log('Image Generation URL:', imageUrl);
+
+        // Make the GET request to the image generator
+        // return fetch(imageUrl);
+    // })
+    
+    document.getElementById("textGemini").innerText = "Generating image " + index + "...";
+    fetch(imageUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        // console.log(response);
+        // console.log(response.text());
+        return response.blob(); // Get the response as a blob (binary data)
+    })
+    .then(blob => {
+        // Create an object URL for the blob
+        const imageBlobUrl = URL.createObjectURL(blob);
+        console.log(blob)
+        
+
+        // Create an img element and set its src attribute
+        // const img = document.createElement('img');
+        // img.src = imageBlobUrl;
+        imagearrs[index] = imageBlobUrl;
+        // img.alt = 'Generated Image';
+        
+        // Append the img element to the image container
+        // const imageContainer = document.getElementById('imageContainer');
+        // imageContainer.innerHTML = ''; // Clear previous images
+        // const tex = document.createElement('text');
+        // tex.innerText = "Image for paragraph number" + index;
+        console.log("FINISHED GENERATING IMAGE FOR PARAGRAPH NUMBER", index);
+        // imageContainer.appendChild(tex);
+        
+        // imageContainer.appendChild(img);
+        finishedArrs[index] = true;
+        if (!document.getElementById("textGemini").textContent.includes('Finished')) {
+          document.getElementById("textGemini").innerHTML = "";
+        }
+        document.getElementById("textGemini").innerHTML += "<div>Finished image " + index + "!</div><br>";
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+    
+    }
+
+const MODEL_NAME = "gemini-1.0-pro";
+  const API_KEY = "AIzaSyBBX2OkCNspjVmUiZu2tApEl_vb-AH12-Q";
+  
+  async function runChat(prompt) {
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+  
+    const generationConfig = {
+      temperature: 0.9,
+      topK: 1,
+      topP: 1,
+      maxOutputTokens: 2048,
+    };
+  
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+    ];
+  
+    const chat = model.startChat({
+      generationConfig,
+      safetySettings,
+      history: [
+      ],
+    });
+
+    const result = await chat.sendMessage(prompt);
+    const response = result.response;
+    var resp2 = await chat.sendMessage("What could be the title of the story/text? Respond with just the title, and only one title, in plain text.")
+    var title = resp2.response
+    console.log(response.text());
+    // await generateImage(response.text());
+    textarrs = response.text().split('\n');
+    console.log(textarrs);
+    console.log("TITLE: " + title);
+    
+    textarrs = textarrs.filter(element => element !== "");
+
+    document.getElementById('book_title').textContent = title.text();
+
+    for (let i = 0; i < textarrs.length; i++) {
+      // Store each promise in the array
+      finishedArrs.push(false);
+      imagearrs.push('')
+    }
+    for (let i = 0; i < textarrs.length; i++) {
+      // Store each promise in the array
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      generateImage(textarrs[i], i, title);
+    }
+  }
+
+  async function runChatSingle(prompt) {
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+  
+    const generationConfig = {
+      temperature: 0.9,
+      topK: 1,
+      topP: 1,
+      maxOutputTokens: 2048,
+    };
+  
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+    ];
+  
+    const chat = model.startChat({
+      generationConfig,
+      safetySettings,
+      history: [
+      ],
+    });
+
+    const result = await chat.sendMessage(prompt);
+    const response = result.response;
+    return response
+  }
+
+  function checkArrayFullyTrue(arr) {
+    return arr.every(value => value === true);
+  }
+  const intervalId = setInterval(() => {
+    if (checkArrayFullyTrue(finishedArrs) && finishedArrs.length>0) {
+      console.log(finishedArrs);
+      console.log("FINISHED GENERATING ALL IMAGES");
+      document.getElementById('textGemini').innerText = "";
+
+
+
+
+
+
+
+
+
+
+
+      document.getElementById("back1").textContent = textarrs[0];
+      
+      for (let count = 1; count < textarrs.length; count++) {
+        book.innerHTML += `<div class="page"><div class="front"><img src="${imagearrs[count - 1]}" /></div><div class="back">${textarrs[count]}</div></div>`
+      } 
+      book.innerHTML += `<div class="page"><div class="front"><img src="${imagearrs[textarrs.length - 1]}" /></div><div class="back">The End.</div></div>`
+
+      const flipBook = (elBook) => {
+      elBook.style.setProperty("--c", 0); // Set current page
+      elBook.querySelectorAll(".page").forEach((page, idx) => {
+        page.style.setProperty("--i", idx);
+        page.addEventListener("click", (evt) => {
+          const curr = evt.target.closest(".back") ? idx : idx + 1;
+          elBook.style.setProperty("--c", curr);
+        });
+      });
+    };
+
+    document.querySelectorAll(".book").forEach(flipBook);
+
+
+
+
+
+
+      book.style.display = "flex";
+      document.getElementById("delete").style.display="none";
+      clearInterval(intervalId); // Stop the interval once condition is met
+    } else {
+      console.log("Not fully true yet...");
+    }
+  }, 2000);
+
+
+document.getElementById('submitBtnText').addEventListener('click', function() {
+
+    // Get the value of the textarea
+    // const prompt = document.getElementById('text').value;
+    // console.log(prompt)
+    const theme = document.getElementById('theme').value;
+    const prompt = document.getElementById('text').value;
+
+    if (theme == "children's book" || theme == "short story" || theme.includes("children") || theme.includes("story")) {
+      runChat(`Write me the text for a ${theme} on the topic of ${prompt} without headers, only content. Make sure to use simple language suitable for young kids to read. Do not include headers, and, if not previously specified, write only 4 sections, separated by line breaks.`);
+    } else if (theme.includes("study")) {
+      runChat(`Write me the text for a ${theme} on the topic of ${prompt} without headers, only content. Only write 5 sections of text, and do not use linebreaks except to separate these sections. Equations and lists (if applicable) should be written in a inline format. The study guide should be very short and very basic.`);
+    } else {
+      runChat(`Write me the text for a ${theme} on the topic of ${prompt} without headers, only content. Do not include headers, and, if not previously specified, write only 4 sections, separated by line breaks.`);
+    }
+
+    setTimeout(() => {
+    document.getElementById('textGemini').innerText = "Generating plotline...";
+    document.getElementById('delete2').style.display = "none";
+    }, "500");
+
+
+    // generateImage(prompt);
+    // Make the POST request to the /generate-text endpoint
+
+
+    // fetch('/generate-text', {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-Type': 'application/json',
+
+    //     },
+    //     body: JSON.stringify({ prompt })
+    // })
+    // .then(response => {
+    //     if (!response.ok) {
+    //         console.error(response.status);
+    //         throw new Error('Network response was not okkk');
+    //     }
+    //     return response.json(); // Get the response as JSON
+    // })
+    
+    
+});
+
+
+
+</script>
+
+
+
+<div class="circle-cursor"></div>
+
+
+
+    
+    
+<script> 
+
+
+  const cursor = document.querySelector('.circle-cursor');
+
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.top = `${e.clientY}px`;
+    cursor.style.left = `${e.clientX}px`;
+  }); 
+
+  document.addEventListener('mousedown', (e) => {
+  const tl = gsap.timeline({});
+
+  tl.to('.circle-cursor', {
+    width: '5px',
+    height: '5px',
+    'border-width': '2px',
+    opacity: 0.7,
+    ease: "expo.out",
+    duration: 0.1
+    });
+  });
+
+  const button = document.querySelector('#submitBtnText'); 
+  button.addEventListener('mousedown', (e) => {
+  const tl = gsap.timeline({});
+
+  tl.to('#submitBtnText', {
+    'background-color': 'white',
+    ease: "expo.out",
+    duration: 0.5
+    });
+  });
+  
+
+  document.addEventListener('mouseup', (e) => {
+  const tl = gsap.timeline({});
+
+  tl.to('.circle-cursor', {
+    width: '10px',
+    height: '10px',
+    'border-width': '3px',
+    opacity: 0.5,
+    ease: "ease.out",
+    duration: 0.1
+  });
+
+  });
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- YUFANS CORNER -->
+
+<div class="book" id="book">
+  <div class="page">
+    <div class="front" style="background-color: #889dd3; --thickness: 30;">
+      <h1 id="book_title">Among Us</h1>
+      <h3 style="color:white">Generated by<br>StoryWeaver AI</h3>
+    </div>
+    <div class="back" id="back1">
+      among us!!!
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+</body>
+</html>

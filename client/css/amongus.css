@@ -1,0 +1,215 @@
+* { box-sizing: border-box; }
+@font-face {
+  font-family: "hatch-sans", sans-serif;
+  src: url("https://use.typekit.net/sej1wnw.css");
+}
+
+body {
+  /* or any other parent wrapper */
+  margin: 0;
+  display: flex;
+  height: 100dvh;
+  perspective: 3000px;
+  overflow: hidden;
+  background-color: #111217;
+}
+
+body:before {
+  top: 0;
+  left: 0;
+}
+
+.e {
+  font-family: "hatch-sans", sans-serif;
+  font-size: 60px;
+  text-align: center;
+  color: white;
+}.h {
+  font-family: "hatch-sans", sans-serif;
+  font-size: 40px;
+  text-align: center;
+  color: white;
+}
+
+input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+input:focus {
+  outline: none;
+}
+textarea:focus {
+  outline: none;
+}
+
+
+
+
+
+
+
+datalist {
+  position: absolute;
+  margin-left: 20dvw;
+  background-color: #111217;
+  border: none;
+  border-radius: 0 0 5px 5px;
+  border-top: none;
+  font-family: sans-serif;
+  width: 60dvw;
+  padding: 5px;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  max-height: 20rem;
+  overflow-y: auto
+  
+}
+
+option {
+  background-color: #111217;
+  padding: 4px;
+  margin: auto;
+  width: 400px;
+  color: rgb(88, 126, 229);
+  margin-bottom: 1px;
+   font-size: 18px;
+  cursor: pointer;
+}
+
+option:hover,  .active{
+  background-color: rgb(48, 49, 66);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.i {
+  font-family: "hatch-sans", sans-serif;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  
+  font-size: 50px;
+  width: 900px;
+  text-align: center;
+  color: #5585ff;
+  background-color: transparent;
+  border: none;
+  padding: none;
+  appearance: none;
+}
+.theme-container {
+  border-radius: 10%;
+}
+
+#theme {
+  background-color: transparent;
+  border: none;
+  padding: none;
+  appearance: none;
+}
+
+#submitBtnText {
+    font-family: "hatch-sans", sans-serif;
+    font-size: 24px;
+    background-color: #0000ff;
+    color: black;
+    position: absolute;
+    top: calc(50vh+200px) !important;
+    margin-top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 160px;
+    height: 60px;
+  
+    border-radius: 20px;
+    padding: 0;
+    border: none;
+    z-index: 5000;
+  }
+
+
+.relativeWrapper {
+  /* or any other parent wrapper */
+  margin: 0;
+  display: block;
+  width: 100dvw;
+  position: fixed;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  height: 100dvh;
+  perspective: auto;
+  font: 16px/1.4 sans-serif;
+  overflow: hidden;
+  background-color: transparent;
+  z-index: -1;
+}
+
+.book {
+  display: flex;
+  margin: auto;
+  width: 600px;
+  height: 600px;
+  /*1* let pointer event go trough pages of lower Z than .book */
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition: translate 1s;
+  translate: calc(min(var(--c), 1) * 50%) 0%;
+  /* DEMO ONLY: incline on the X axis for pages preview */
+  rotate: 1 0 0 12deg;
+}
+
+.page {
+  --thickness: 30;
+  /* PS: Don't go below thickness 0.4 or the pages might transpare */
+  flex: none;
+  display: flex;
+  width: 100%;
+  /*1* allow pointer events on pages */
+  pointer-events: all;
+  user-select: none;
+  transform-style: preserve-3d;
+  border: 1px solid #0008;
+  transform-origin: left center;
+  font: 24px/1.4 sans-serif;
+  transition:
+    transform 1s,
+    rotate 1s ease-in calc((min(var(--i), var(--c)) - max(var(--i), var(--c))) * 50ms);
+  translate: calc(var(--i) * -100%) 0px 0px;
+  transform: translateZ( calc((var(--c) - var(--i) - 0.5) * calc(var(--thickness) * 1px)));
+  rotate: 0 1 0 calc(clamp(0, var(--c) - var(--i), 1) * -180deg);
+}
+
+.page img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.front,
+.back {
+  flex: none;
+  width: 100%;
+  padding: 2rem;
+  backface-visibility: hidden;
+  background-color: #fff;
+  /* Fix backface visibility Firefox: */
+  translate: 0px;
+}
+
+.back {
+  background-image: linear-gradient(to right, #fff 80%, #ddd 100%);
+  translate: -100% 0;
+  rotate: 0 1 0 180deg;
+}
